@@ -35,6 +35,8 @@ function enableCam() {
       video.srcObject = stream;
       video.play();
       video.addEventListener("loadeddata", () => {
+        canvasElement.width = video.videoWidth;
+        canvasElement.height = video.videoWidth; // 正方形にする
         predictWebcam();
       });
     });
