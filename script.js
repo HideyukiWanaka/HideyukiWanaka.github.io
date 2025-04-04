@@ -5,6 +5,8 @@ let runningMode = "IMAGE";
 let webcamRunning = false;
 let maxRebaScore = 0;
 let maxRiskLevel = "";
+let currentRebaScore = 0;
+let currentRiskLevel = "";
 
 const video = document.getElementById("webcam");
 const canvasElement = document.getElementById("output_canvas");
