@@ -6,7 +6,8 @@ body {
 video, canvas.output_canvas {
   width: 100%;
   max-width: 640px;
-  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
   /* transform: rotateY(180deg); */  /* ← 左右反転を無効化 */
   display: block;
   margin: auto;
