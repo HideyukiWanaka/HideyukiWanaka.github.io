@@ -242,6 +242,16 @@ function updateRebaChart(scores) {
   const time = now.toLocaleTimeString();
   const data = rebaChart.data;
 
+  if (
+    isNaN(scores.scoreA) ||
+    isNaN(scores.scoreB) ||
+    isNaN(scores.scoreC) ||
+    isNaN(scores.finalScore)
+  ) {
+    console.warn("Invalid score(s), skipping chart update.");
+    return;
+  }
+
   data.labels.push(time);
   data.datasets[0].data.push(scores.scoreA);
   data.datasets[1].data.push(scores.scoreB);
@@ -254,4 +264,70 @@ function updateRebaChart(scores) {
   }
 
   rebaChart.update();
+}
+
+function predictWebcam() {
+  if (runningMode === "IMAGE") {
+    runningMode = "VIDEO";
+    poseLandmarker.setOptions({ runningMode: "VIDEO" });
+  }
+
+  const startTimeMs = performance.now();
+  if (lastVideoTime !== video.currentTime) {
+    lastVideoTime = video.currentTime;
+
+    poseLandmarker.detectForVideo(video, startTimeMs, (result) => {
+      const lm = result.landmarks?.[0];
+      if (!lm || !isFullBodyDetected(lm) || !areLandmarksInFrame(lm)) return;
+
+      const now = performance.now();
+      if (now - lastAngleTime > 500) {
+        lastAngleTime = now;
+        try {
+          const modifiers = getModifiersFromUI();
+          const angles = getRebaAngles(lm);
+          const scores = calculateREBAScore(angles, modifiers);
+
+          currentRebaScore = scores.finalScore;
+          currentRiskLevel = scores.riskLevel;
+
+          if (scores.finalScore > maxRebaScore) {
+            maxRebaScore = scores.finalScore;
+            maxRiskLevel = scores.riskLevel;
+          }
+
+          updateRebaChart(scores);
+        } catch (e) {
+          console.warn("Calculation error:", e.message);
+        }
+      }
+
+      canvasCtx.save();
+      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      canvasCtx.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+      if (result.landmarks) {
+        for (const landmarks of result.landmarks) {
+          drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
+            color: "#00FF00", lineWidth: 4
+          });
+          drawingUtils.drawLandmarks(landmarks, {
+            color: "#FF6F00", radius: 3
+          });
+        }
+      }
+      canvasCtx.restore();
+    });
+  }
+
+  if (webcamRunning) {
+    window.requestAnimationFrame(predictWebcam);
+  }
+}
+
+function handleStopRecording() {
+  if (currentRebaScore === 0) {
+    alert("No valid pose detected.");
+  } else {
+    alert("Current REBA Score: " + currentRebaScore + "\nRisk Level: " + currentRiskLevel);
+  }
 }
