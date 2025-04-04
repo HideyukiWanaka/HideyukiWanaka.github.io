@@ -237,26 +237,16 @@ const rebaChart = new Chart(ctx, {
 });
 
 
-function updateRebaChart(scores) {
+function updateRebaChart(scoreObj) {
   const now = new Date();
   const time = now.toLocaleTimeString();
   const data = rebaChart.data;
 
-  if (
-    isNaN(scores.scoreA) ||
-    isNaN(scores.scoreB) ||
-    isNaN(scores.scoreC) ||
-    isNaN(scores.finalScore)
-  ) {
-    console.warn("Invalid score(s), skipping chart update.");
-    return;
-  }
-
   data.labels.push(time);
-  data.datasets[0].data.push(scores.scoreA);
-  data.datasets[1].data.push(scores.scoreB);
-  data.datasets[2].data.push(scores.scoreC);
-  data.datasets[3].data.push(scores.finalScore);
+  data.datasets[0].data.push(scoreObj.scoreA);
+  data.datasets[1].data.push(scoreObj.scoreB);
+  data.datasets[2].data.push(scoreObj.scoreC);
+  data.datasets[3].data.push(scoreObj.finalScore);
 
   if (data.labels.length > 30) {
     data.labels.shift();
@@ -287,9 +277,6 @@ function predictWebcam() {
           const modifiers = getModifiersFromUI();
           const angles = getRebaAngles(lm);
           const scores = calculateREBAScore(angles, modifiers);
-
-          currentRebaScore = scores.finalScore;
-          currentRiskLevel = scores.riskLevel;
 
           if (scores.finalScore > maxRebaScore) {
             maxRebaScore = scores.finalScore;
@@ -325,9 +312,9 @@ function predictWebcam() {
 }
 
 function handleStopRecording() {
-  if (currentRebaScore === 0) {
+  if (maxRebaScore === 0) {
     alert("No valid pose detected.");
   } else {
-    alert("Current REBA Score: " + currentRebaScore + "\nRisk Level: " + currentRiskLevel);
+    alert("Max REBA Score: " + maxRebaScore + "\nRisk Level: " + maxRiskLevel);
   }
 }
